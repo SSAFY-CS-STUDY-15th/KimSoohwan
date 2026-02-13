@@ -33,8 +33,7 @@
 - 중복 방지를 위해 주제는 상호간 ASAP 공유
 
 ---
-## Convention 
-
+## Rule
 
 ### Title
 - [$topic]-${title}
@@ -80,5 +79,3 @@
 ```
 
 ----
-
-</details>
