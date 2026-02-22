@@ -1,5 +1,7 @@
 # 배치 작업과 MySQL 격리수준
 
+<a href="https://github.com/genius00hwan/laboratory/tree/main/db-tx-batch">실험 내용 자세히 보기</a>
+
 MySQL 격리수준별로 배치 작업이 읽고 -> 계산하고 -> 쓰는 동안, 동시에 OLTP 트래픽이 들어오면 어떤 일이 생길까?
 _(OLTP: Online Transaction Processing, 온라인 트랜잭션 처리)_
 
@@ -32,6 +34,7 @@ _(OLTP: Online Transaction Processing, 온라인 트랜잭션 처리)_
 
 > 아래 요약은 MySQL InnoDB를 기준으로 잡았습니다. (세부는 케이스/쿼리 형태에 따라 달라집니다)
 
+<a href="assets/tx_isolation_level.md">자세히 보기</a>
 
 - **READ UNCOMMITTED**  
   커밋하지 않은 데이터 조차도 접근할 수 있는 격리 수준 -> 다른 트랜잭션의 작업이 커밋 또는 롤백되지 않아도 즉시 보이게 된다.  
