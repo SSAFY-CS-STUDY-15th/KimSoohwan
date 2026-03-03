@@ -142,8 +142,7 @@ System.out.println(c == d); // false
 
 이번 실험은 다음 네 가지를 비교한다.
 
-리터럴 문자열
-
+- 리터럴 문자열
 - `new String()`으로 만든 힙 객체
 - `intern()` 호출 전의 일반 문자열 객체
 - `intern()`이 반환한 풀 객체
@@ -403,6 +402,10 @@ GC 후: 동적 문자열 intern() 결과 살아있나? false
 정확히 말하면,
 
 > 리터럴 문자열은 클래스 메타데이터와 연결되어 오래 살아남기 쉽고, new String()은 일반 힙 객체처럼 동작하며, intern()은 객체를 “대표 객체를 공유”하게 만드는 동작이다.
+
+한눈에 보기
+
+![where_are_string_instances](./assets/where_are_string_instances.png)
 
 ### GPT가 말해주는 실무 포인트
 
