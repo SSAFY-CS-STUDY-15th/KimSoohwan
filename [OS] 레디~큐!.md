@@ -1,4 +1,3 @@
-# 레디~~ 큐!(숙취해소제 아님)
 
 ## 들어가며
 
@@ -1322,7 +1321,7 @@ local queue는 경합을 줄이는 데 유리합니다.
 shared queue는 중앙 병목이 있지만 단순하고 운영하기 쉽습니다.  
 시스템을 크게 바꾸기 어렵다면 `shared_split_lock` 같은 개선이 더 현실적인 답일 수 있습니다.
 
-좋은 해석은 이렇습니다.
+그래서..
 
 > shared queue는 단순함을 유지하는 대신 중앙 경합을 감수합니다.  
 > local queue는 경합을 줄이는 대신 분배 문제를 감수합니다.
@@ -1346,22 +1345,19 @@ topology 전체를 바꾸지 않아도 된다는 점에서 실무적으로도 �
 3. `SPSC`는 더 좋은 shared queue가 아닙니다.  
 
 1 producer / 1 consumer라는 좁은 계약을 받아들이는 대신 hot path를 매우 가볍게 만드는 구조입니다.  
-따라서 SPSC는 단독 primitive로 shared queue와 나란히 비교하기보다, worker-local topology 안에서 해석해야 합니다.
+따라서 SPSC는 단독 primitive로 shared queue와 나란히 비교하기보다, worker-local topology 안에서 해석한 것입니다.
 
 4. `MPMC ring`은 bounded memory와 ring buffer의 장점이 있습니다.  
 
 하지만 여러 producer와 여러 consumer가 같은 ring 상태를 공유하기 때문에 동기화 비용이 남습니다.  
-또한 overload 조건에서는 capacity 압박을 받기 때문에 full hits, drop, tail을 반드시 함께 봐야 합니다.
+또한 overload 조건에서는 capacity 압박을 받기 때문에 full hits, drop, tail을 확인해야 합니다.
 
 5. `dispatch_local_spsc`는 worker balance를 잡기 좋지만 dispatcher hop 비용이 있습니다.  
 분배를 중앙에서 제어할 수 있다는 장점이 있지만, 작업이 한 번 더 queue를 통과하기 때문에 p99가 커질 수 있습니다.  
-즉 균형을 얻는 대신 경로 길이를 지불하는 구조입니다.
 
-여섯째, `direct_local_spsc`는 현재 조건에서 처리량과 tail latency 모두 가장 설득력 있는 모습을 보였습니다.  
+6. `direct_local_spsc`는 현재 조건에서 처리량과 tail latency 모두 가장 설득력 있는 모습을 보였습니다.  
 dispatcher hop을 제거했기 때문에 경로가 짧고, worker-local SPSC의 장점을 잘 살릴 수 있었습니다.  
 하지만 fixed affinity와 `ingress_threads <= worker_threads` 제약이 있으며, skew와 fan-in이 커지면 별도 검증이 필요합니다.
-
-결국 이번 실험의 핵심은 다음 문장으로 정리할 수 있습니다.
 
 > 큐 벤치마크는 숫자 싸움이 아니라, 설계 계약과 병목 위치를 읽는 일입니다.
 
@@ -1370,22 +1366,18 @@ p99만 보면 처리량과 drop을 놓칠 수 있습니다.
 SPSC만 보면 topology 비용을 놓칠 수 있습니다.  
 shared queue만 고집하면 경합을 분산할 기회를 놓칠 수 있습니다.
 
-따라서 큐 벤치마크를 읽을 때는 항상 다음 질문을 해야 합니다.
+따라서 확인할 점은..
 
-- 이 구조는 shared queue인가, worker-local queue인가?
 - producer와 consumer의 동시성 계약은 무엇인가?
 - 큐가 꽉 차면 기다리는가, 버리는가?
 - 병목은 ingress, dispatch, worker-local queue 중 어디에서 생기는가?
 - p99가 큰 이유는 락 경합인가, queue hop인가, route skew인가?
-- 현재 승자는 어떤 조건에서만 승자인가?
+- 현재 구조는 어떤 조건에 적합한 것인가?
 
-이 질문을 할 수 있어야 벤치마크 숫자를 설계 판단으로 바꿀 수 있습니다.
-
-숫자는 스스로 설명하지 않습니다.  
-TPS, p99, drop count는 그냥 결과일 뿐입니다.  
+TPS, p99, drop count 등의 숫자는 그냥 결과일 뿐입니다.  
 그 숫자가 어떤 구조적 비용에서 나왔는지 해석해야 의미가 생깁니다.
 
-이번 실험을 통해 배운 점은 명확합니다.
+이번 실험을 통해 배운 점은.. 
 
 > 빠른 큐를 고르는 것보다 중요한 것은, 현재 시스템의 병목이 어디에 있고 어떤 비용을 감수할 수 있는지 판단하는 것입니다.
 
