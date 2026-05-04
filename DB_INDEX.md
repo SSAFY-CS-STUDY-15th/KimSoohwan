@@ -1,6 +1,57 @@
 # DB:index
 
-## Index
+MySQL(InnoDB): 기본키 = 클러스터드 인덱스
+
+- 테이블의 실제 row 데이터가 기본키 B+Tree 리프에 같이 저장됨.
+- 세컨더리 인덱스 리프에는 (세컨더리 키 + PK)가 들어가서, 세컨더리로 찾은 뒤 PK로 한 번 더 타고 들어가는 구조가 기본. (PK가 곧 row 포인터 역할)
+
+→  PK 설계가 모든 세컨더리 인덱스 크기/성능에 직결.
+
+PostgreSQL: 힙 테이블 + 인덱스는 튜플 위치(TID)를 가리킴
+
+- 인덱스는 보통 row가 저장된 위치를 가리키고, MVCC 때문에 보이는 버전인지 확인하려고 테이블을 추가로 방문.
+- 조건이 맞으면 인덱스만 보는 index-only scan도 가능하지만, visibility map 상태에 따라 성능이 갈림.
+- PG는 업데이트/삭제가 누적되면 dead tuple이 생기기 쉬워서 vaccum의 유지보수가 중요.
+
+## B+Tree 구조
+
+**특징**
+
+- 모든 데이터는 Leaf Node에 저장
+- Leaf Node는 Linked List로 연결
+- 범위 검색에 최적화
+
+**왜 Leaf에만 데이터 저장?**
+
+- 트리 depth 최소화
+- 검색 성능 향상
+
+### Clustered Index vs Secondary Index
+
+#### Clustered Index (PK)
+
+![image](assets/index1.png)
+
+- InnoDB 엔진에서 table의 Primary Key를 정의하면 Clustered Index
+- 테이블당 하나만 가질 수 있다.
+- Insert시 data가 정렬되고 index는 data block의 첫 번째 레코드의 주소값을 갖게 된다. index가 곧 바로 data block에 접근해서 Secondary Index보다 동작이 빠른 편
+- data가 정렬되어 저장되므로, Secondary Index에 비해 범위로 질의를 하는 것에 유리하다. 빈번한 I/O가 덜 발생할 것이기 때문
+
+#### Secondary Index
+
+![image](assets/index2.png)
+
+- Primary Key 이외에 필요한 정렬 기준이 있을 경우 사용한다.
+- 테이블당 여러 개 가질 수 있다.
+- data record가 정렬되어 있지 않다.
+- index가 data record의 모든 주소값을 가지고 있어야 한다.
+- unique 하지 않아도 된다.
+- 데이터 레코드가 index 순서대로 정렬 되어 있지 않기 때문에 범위 조건으로 검색하게 되면 많은 I/O가 발생할 수 있다. 그러면 좋은 성능을 내지 못 할 것이다.
+- index는 모든 레코드에 대한 색인 데이터를 들고 있어야 하고 정렬된다. 따라서, update, delete, insert시 오래 걸릴 수 있고, clustered index에 비해 더 많은 공간을 차지하게 된다.
+
+![image](assets/index3.png)
+
+## Questions
 
 인덱스는 어떤 자료구조로 구현되나요?
 
